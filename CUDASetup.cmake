@@ -38,12 +38,12 @@
 #
 # The oldest CUDA toolkit supported by this file: 9.0
 #
-# The newest CUDA toolkit available when last updated: 10.1 Update 1
+# The newest CUDA toolkit available when last updated: 11.0 Update 1 (11.0.3)
 #
 # # # # # # # # # # # #
 # The MIT License (MIT)
 #
-# Copyright (c) 2019 Stephen Sorley
+# Copyright (c) 2019-2020 Stephen Sorley
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -77,8 +77,16 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 
-
-if(    CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
+if(    CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11)
+    # https://docs.nvidia.com/cuda/archive/11.0/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list
+    set(arch_list
+        52 # Maxwell
+        60 # Pascall
+        70 # Volta
+        75 # Turing
+        80 # Ampere
+    )
+elseif(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
     # https://docs.nvidia.com/cuda/archive/10.1/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list
     set(arch_list
         30 # Kepler
@@ -144,6 +152,12 @@ foreach(arch ${arch_list})
         string(APPEND CMAKE_CUDA_FLAGS " -gencode arch=compute_${arch},code=[compute_${arch},sm_${arch}]")
     endif()
 endforeach()
+
+# If supported by this version of NVCC, request that all unknown flags be passed through
+# automatically to the host compiler and linker.
+#if(CMAKE_CUDA_COMPILER_VERSION GREATER_EQUAL 11.0.221) # compiler from 11.0 Update 1
+#    string(APPEND CMAKE_CUDA_FLAGS " --forward-unknown-opts")
+#endif()
 
 # Force nvcc to treat headers from CUDA include dir as system headers. If we don't do this, we get tons of
 # spam warnings from CUDA's headers when building with newer GCC or Clang.
@@ -349,6 +363,8 @@ if(TARGET CUDA::cudart_static AND NOT WIN32)
     )
 endif()
 
+int_cudasetup_find_lib_static(cudadevrt)
+
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -359,8 +375,10 @@ int_cudasetup_find_lib(cublas)
 int_cudasetup_find_lib(cublasLt)
 int_cudasetup_find_lib(cufft)
 int_cudasetup_find_lib(cufftw)
+int_cudasetup_find_lib(cupti)
 int_cudasetup_find_lib(curand)
 int_cudasetup_find_lib(cusolver)
+int_cudasetup_find_lib(cusolverMg)
 int_cudasetup_find_lib(cusparse)
 
 int_cudasetup_add_deps(NAMES cublas DEPS cublasLt)
@@ -397,6 +415,10 @@ int_cudasetup_add_deps(NAMES nvgraph DEPS ${deps})
 int_cudasetup_find_lib(nvjpeg)
 int_cudasetup_find_lib(nvToolsExt)
 
+int_cudasetup_find_lib(nvrtc-builtins)
+int_cudasetup_find_lib(nvrtc)
+int_cudasetup_add_deps(NAMES nvrtc DEPS nvrtc-builtins)
+
 
 # Static versions of everything (not available on Windows as of CUDA 10.1)
 set(needos) #add libs to here that need to be linked to the culibos static library.
@@ -408,6 +430,7 @@ int_cudasetup_find_lib_static(cublas_static           needos solver_deps)
 int_cudasetup_find_lib_static(cufft_static            needos)
 int_cudasetup_find_lib_static(cufft_static_nocallback needos)
 int_cudasetup_find_lib_static(cufftw_static           needos)
+int_cudasetup_find_lib_static(cupti_static)
 int_cudasetup_find_lib_static(curand_static           needos)
 int_cudasetup_find_lib_static(cusolver_static         needos)
 int_cudasetup_find_lib_static(cusparse_static         needos solver_deps)
