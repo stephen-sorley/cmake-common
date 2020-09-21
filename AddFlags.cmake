@@ -116,7 +116,6 @@ else()
         -Wextra
 
         -Wcast-align
-        -Wformat-security
         -Wlogical-op
         -Wmissing-declarations
         -Wmissing-format-attribute
@@ -145,10 +144,16 @@ else()
         _int_add_flags_compiler(LANGS C CXX FLAGS
             -Wconversion
             -Wsign-conversion
+            -Wformat-security
         )
     else()
         _int_add_flags_compiler(LANGS C CXX FLAGS
+            -Wno-deprecated-declarations
+            -Wno-format
+            -Wno-missing-prototypes
+            -Wno-unknown-pragmas
             -Wno-unused-parameter
+            -Wno-unused-function
         )
     endif()
 
